@@ -2,6 +2,16 @@ import tensorflow as tf
 from tensorflow import keras
 
 def conv_block(inputs, n_filters, kernel_size):
+    """
+    Convolutional block of Unet, consisted by 2 sub-blocks of convolution/batch normalization/activation operations
+
+    Arguments:
+        inputs -- Input tensor
+        n_filters -- Number of filters for the convolutional layers
+        kernel_size -- Size of the kernel for both convolutions
+    Returns:
+        x -- Tensor with the feature maps after the convolutions
+    """
 
     x = keras.layers.Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(inputs)
     x = keras.layers.BatchNormalization()(x)
@@ -13,6 +23,20 @@ def conv_block(inputs, n_filters, kernel_size):
     return x
 
 def encoder_block(inputs, n_filters, kernel_size, pool_size, dropout_probability, max_pooling=True):
+    """ 
+    A typical block of the encoder of Unet, including a convolutional block, the dropout probability and the max pooling to reduce the spatial dimensions
+
+    Arguments:
+        inputs -- Input tensor
+        n_filters -- Number of filters for the convolutional layers
+        kernel_size -- Size of the kernel for the convolutional block
+        pool_size -- Size of the kernel for the max pooling operation
+        dropout_probability -- Dropout probability
+        max_pooling -- Boolean for the use of max pooling operation
+    Returns:
+        next_layer -- Output to the next block
+        skip_connection --  Output for the skip connection
+    """
    
     feature_maps = conv_block(inputs, n_filters, kernel_size)
     
@@ -29,6 +53,19 @@ def encoder_block(inputs, n_filters, kernel_size, pool_size, dropout_probability
     return next_layer_input, skip_connection
 
 def decoder_block(inputs, skipped_input, n_filters, kernel_size, stride_size):
+    """
+    A typical block of the decoder of Unet, including a transposed convolution, concatenate and a convolutional block
+
+    Arguments:
+        inputs -- Input tensor 
+        skipped_input -- Input tensor from a previous skip coneection
+        n_filters -- Number of filters for the convolutional layers
+        kernel_size -- Size of the kernel for the convolutional block
+        stride_size -- Stride size for the trasposed convolution
+    Returns:
+        next_layer -- Output to the next block
+
+    """
 
     upsampled = keras.layers.Conv2DTranspose(n_filters, kernel_size, stride_size, padding='same')(inputs)
     merged = keras.layers.Concatenate()([upsampled, skipped_input])
@@ -41,6 +78,18 @@ def decoder_block(inputs, skipped_input, n_filters, kernel_size, stride_size):
 
 
 def unet_model(input_shape=(512, 512, 3), initial_filters=32, kernel_size=(3, 3), pool_size=(2, 2), up_stride_size = (2, 2), n_classes=2, dropout_probability = 0.3):
+    """
+    Unet model
+
+    Arguments:
+        input_shape -- Shape of the input images to the model
+        initial_filters -- Number of the filters of the first convolutional block
+        kernel_size -- Size of the kernel for the convolutional block
+        pool_size -- Size of the kernel for the max pooling operation
+        up_stride_size -- Stride size for the trasposed convolution
+        n_classes -- Number of the output classes
+        dropout_probability -- Dropout probability
+    """
 
     inputs = keras.layers.Input(input_shape)
 
