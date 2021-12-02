@@ -77,7 +77,7 @@ def decoder_block(inputs, skipped_input, n_filters, kernel_size, stride_size):
     return next_layer
 
 
-def unet_model(input_shape=(512, 512, 3), initial_filters=32, kernel_size=(3, 3), pool_size=(2, 2), up_stride_size = (2, 2), n_classes=2, dropout_probability = 0.3):
+def unet_model(input_shape=(512, 512, 3), initial_filters=32, kernel_size=(3, 3), pool_size=(2, 2), up_stride_size = (2, 2), n_classes=1, dropout_probability = 0.3):
     """
     Unet model
 
