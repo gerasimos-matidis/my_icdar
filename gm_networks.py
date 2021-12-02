@@ -105,7 +105,9 @@ def unet_model(input_shape=(512, 512, 3), initial_filters=32, kernel_size=(3, 3)
     up_block2 = decoder_block(up_block3, down_block2[1], initial_filters*2, kernel_size, up_stride_size)
     up_block1 = decoder_block(up_block2, down_block1[1], initial_filters, kernel_size, up_stride_size)
 
-    outputs = keras.layers.Conv2D(n_classes, 1, padding='same', kernel_initializer='he_normal')(up_block1)
+    final_conv = keras.layers.Conv2D(n_classes, 1, padding='same', kernel_initializer='he_normal')(up_block1)
+    outputs = keras.layers.Activation('sigmoid')(final_conv)
+
     model = keras.Model(inputs=inputs, outputs=outputs)
 
     return model
