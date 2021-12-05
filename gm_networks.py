@@ -3,7 +3,7 @@ from tensorflow import keras
 
 def conv_block(inputs, n_filters, kernel_size):
     """
-    Convolutional block of Unet, consisted by 2 sub-blocks of convolution/batch normalization/activation operations
+    Convolutional block of Unet, consisted of 2 sub-blocks of convolution/batch normalization/activation operations
 
     Arguments:
         inputs -- Input tensor
@@ -112,4 +112,4 @@ def unet_model(input_shape=(512, 512, 3), initial_filters=32, kernel_size=(3, 3)
 
     return model
 
-    
+
