@@ -111,3 +111,5 @@ def unet_model(input_shape=(512, 512, 3), initial_filters=32, kernel_size=(3, 3)
     model = keras.Model(inputs=inputs, outputs=outputs)
 
     return model
+
+    
