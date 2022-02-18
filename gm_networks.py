@@ -1,7 +1,9 @@
+import numpy as np
 import tensorflow as tf
 from tensorflow import keras
+from utils import center_crop
 
-def conv_block(inputs, n_filters, kernel_size):
+def conv_block(inputs, n_filters, kernel_size, padding):
     """
     Convolutional block of Unet, consisted of 2 sub-blocks of convolution/batch normalization/activation operations
 
@@ -13,16 +15,16 @@ def conv_block(inputs, n_filters, kernel_size):
         x -- Tensor with the feature maps after the convolutions
     """
 
-    x = keras.layers.Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(inputs)
+    x = keras.layers.Conv2D(n_filters, kernel_size, padding=padding, kernel_initializer='he_normal')(inputs)
     x = keras.layers.BatchNormalization()(x)
     x = keras.layers.Activation('relu')(x)
-    x = keras.layers.Conv2D(n_filters, kernel_size, padding='same', kernel_initializer='he_normal')(x)
+    x = keras.layers.Conv2D(n_filters, kernel_size, padding=padding, kernel_initializer='he_normal')(x)
     x = keras.layers.BatchNormalization()(x)
     x = keras.layers.Activation('relu')(x)
 
     return x
 
-def encoder_block(inputs, n_filters, kernel_size, pool_size, dropout_probability, max_pooling=True):
+def encoder_block(inputs, n_filters, kernel_size, padding, pool_size, dropout_probability, max_pooling=True):
     """ 
     A typical block of the encoder of Unet, including a convolutional block, the dropout probability and the max pooling to reduce the spatial dimensions
 
@@ -38,7 +40,7 @@ def encoder_block(inputs, n_filters, kernel_size, pool_size, dropout_probability
         skip_connection --  Output for the skip connection
     """
    
-    feature_maps = conv_block(inputs, n_filters, kernel_size)
+    feature_maps = conv_block(inputs, n_filters, kernel_size, padding)
     
     if dropout_probability > 0:
         feature_maps = keras.layers.Dropout(dropout_probability)(feature_maps)
@@ -52,7 +54,7 @@ def encoder_block(inputs, n_filters, kernel_size, pool_size, dropout_probability
     
     return next_layer_input, skip_connection
 
-def decoder_block(inputs, skipped_input, n_filters, kernel_size, stride_size):
+def decoder_block(inputs, skipped_input, n_filters, kernel_size, padding, stride_size):
     """
     A typical block of the decoder of Unet, including a transposed convolution, concatenate and a convolutional block
 
@@ -68,16 +70,22 @@ def decoder_block(inputs, skipped_input, n_filters, kernel_size, stride_size):
     """
 
     upsampled = keras.layers.Conv2DTranspose(n_filters, kernel_size, stride_size, padding='same')(inputs)
+
+    if padding == 'valid':
+
+        crop_shape = upsampled.shape[1:3]
+        skipped_input = center_crop(skipped_input, crop_shape)
+        print('skkk', skipped_input.shape, 'ccccc', crop_shape)
     merged = keras.layers.Concatenate()([upsampled, skipped_input])
     
-    feature_maps = conv_block(merged, n_filters, kernel_size)
+    feature_maps = conv_block(merged, n_filters, kernel_size, padding)
     
     next_layer = feature_maps
 
     return next_layer
 
 
-def unet_model(input_shape=(512, 512, 3), initial_filters=32, kernel_size=(3, 3), pool_size=(2, 2), up_stride_size = (2, 2), n_classes=1, dropout_probability = 0.3):
+def unet_model(input_shape=(572, 572, 3), initial_filters=32, kernel_size=(3, 3), padding='valid', pool_size=(2, 2), up_stride_size = (2, 2), n_classes=1, dropout_probability = 0.3):
     """
     Unet model
 
@@ -93,23 +101,21 @@ def unet_model(input_shape=(512, 512, 3), initial_filters=32, kernel_size=(3, 3)
 
     inputs = keras.layers.Input(input_shape)
 
-    down_block1 = encoder_block(inputs, initial_filters, kernel_size, pool_size, 0)
-    down_block2 = encoder_block(down_block1[0], initial_filters*2, kernel_size, pool_size, 0)
-    down_block3 = encoder_block(down_block2[0], initial_filters*4, kernel_size, pool_size, dropout_probability)
-    down_block4 = encoder_block(down_block3[0], initial_filters*8, kernel_size, pool_size, dropout_probability)
+    down_block1 = encoder_block(inputs, initial_filters, kernel_size, padding, pool_size, 0)
+    down_block2 = encoder_block(down_block1[0], initial_filters*2, kernel_size, padding, pool_size, 0)
+    down_block3 = encoder_block(down_block2[0], initial_filters*4, kernel_size, padding, pool_size)
+    down_block4 = encoder_block(down_block3[0], initial_filters*8, kernel_size, padding, pool_size, dropout_probability)
 
-    bottleneck_block = encoder_block(down_block4[0], initial_filters*16, kernel_size, pool_size, dropout_probability, max_pooling=False)
+    bottleneck_block = encoder_block(down_block4[0], initial_filters*16, kernel_size, padding, pool_size, dropout_probability, max_pooling=False)
 
-    up_block4 = decoder_block(bottleneck_block[0], down_block4[1], initial_filters*8, kernel_size, up_stride_size)
-    up_block3 = decoder_block(up_block4, down_block3[1], initial_filters*4, kernel_size, up_stride_size)
-    up_block2 = decoder_block(up_block3, down_block2[1], initial_filters*2, kernel_size, up_stride_size)
-    up_block1 = decoder_block(up_block2, down_block1[1], initial_filters, kernel_size, up_stride_size)
+    up_block4 = decoder_block(bottleneck_block[0], down_block4[1], initial_filters*8, kernel_size, padding, up_stride_size)
+    up_block3 = decoder_block(up_block4, down_block3[1], initial_filters*4, kernel_size, padding, up_stride_size)
+    up_block2 = decoder_block(up_block3, down_block2[1], initial_filters*2, kernel_size, padding, up_stride_size)
+    up_block1 = decoder_block(up_block2, down_block1[1], initial_filters, kernel_size, padding, up_stride_size)
 
-    final_conv = keras.layers.Conv2D(n_classes, 1, padding='same', kernel_initializer='he_normal')(up_block1)
-    outputs = keras.layers.Activation('sigmoid')(final_conv)
+    outputs = keras.layers.Conv2D(n_classes, 1, padding='same', activation='sigmoid', kernel_initializer='he_normal')(up_block1)
 
-    model = keras.Model(inputs=inputs, outputs=outputs)
+    return keras.Model(inputs=inputs, outputs=outputs)
 
-    return model
-
-
+model = unet_model(input_shape=(512, 512, 3))
+print(model.summary())
