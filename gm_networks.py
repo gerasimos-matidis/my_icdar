@@ -103,7 +103,7 @@ def unet_model(input_shape=(572, 572, 3), initial_filters=32, kernel_size=(3, 3)
 
     down_block1 = encoder_block(inputs, initial_filters, kernel_size, padding, pool_size, 0)
     down_block2 = encoder_block(down_block1[0], initial_filters*2, kernel_size, padding, pool_size, 0)
-    down_block3 = encoder_block(down_block2[0], initial_filters*4, kernel_size, padding, pool_size)
+    down_block3 = encoder_block(down_block2[0], initial_filters*4, kernel_size, padding, pool_size, 0)
     down_block4 = encoder_block(down_block3[0], initial_filters*8, kernel_size, padding, pool_size, dropout_probability)
 
     bottleneck_block = encoder_block(down_block4[0], initial_filters*16, kernel_size, padding, pool_size, dropout_probability, max_pooling=False)
@@ -116,6 +116,3 @@ def unet_model(input_shape=(572, 572, 3), initial_filters=32, kernel_size=(3, 3)
     outputs = keras.layers.Conv2D(n_classes, 1, padding='same', activation='sigmoid', kernel_initializer='he_normal')(up_block1)
 
     return keras.Model(inputs=inputs, outputs=outputs)
-
-model = unet_model(input_shape=(512, 512, 3))
-print(model.summary())
