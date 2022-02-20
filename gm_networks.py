@@ -75,9 +75,8 @@ def decoder_block(inputs, skipped_input, n_filters, kernel_size, padding, stride
 
         crop_shape = upsampled.shape[1:3]
         skipped_input = center_crop(skipped_input, crop_shape)
-        print('skkk', skipped_input.shape, 'ccccc', crop_shape)
+        
     merged = keras.layers.Concatenate()([upsampled, skipped_input])
-    
     feature_maps = conv_block(merged, n_filters, kernel_size, padding)
     
     next_layer = feature_maps
@@ -85,7 +84,7 @@ def decoder_block(inputs, skipped_input, n_filters, kernel_size, padding, stride
     return next_layer
 
 
-def unet_model(input_shape=(572, 572, 3), initial_filters=32, kernel_size=(3, 3), padding='valid', pool_size=(2, 2), up_stride_size = (2, 2), n_classes=1, dropout_probability = 0.3):
+def unet_model(input_shape=(512, 512, 3), initial_filters=32, kernel_size=(3, 3), padding='same', pool_size=(2, 2), up_stride_size = (2, 2), n_classes=1, dropout_probability = 0.3):
     """
     Unet model
 
@@ -100,19 +99,18 @@ def unet_model(input_shape=(572, 572, 3), initial_filters=32, kernel_size=(3, 3)
     """
 
     inputs = keras.layers.Input(input_shape)
-
     down_block1 = encoder_block(inputs, initial_filters, kernel_size, padding, pool_size, 0)
     down_block2 = encoder_block(down_block1[0], initial_filters*2, kernel_size, padding, pool_size, 0)
     down_block3 = encoder_block(down_block2[0], initial_filters*4, kernel_size, padding, pool_size, 0)
     down_block4 = encoder_block(down_block3[0], initial_filters*8, kernel_size, padding, pool_size, dropout_probability)
-
     bottleneck_block = encoder_block(down_block4[0], initial_filters*16, kernel_size, padding, pool_size, dropout_probability, max_pooling=False)
-
     up_block4 = decoder_block(bottleneck_block[0], down_block4[1], initial_filters*8, kernel_size, padding, up_stride_size)
     up_block3 = decoder_block(up_block4, down_block3[1], initial_filters*4, kernel_size, padding, up_stride_size)
     up_block2 = decoder_block(up_block3, down_block2[1], initial_filters*2, kernel_size, padding, up_stride_size)
     up_block1 = decoder_block(up_block2, down_block1[1], initial_filters, kernel_size, padding, up_stride_size)
-
     outputs = keras.layers.Conv2D(n_classes, 1, padding='same', activation='sigmoid', kernel_initializer='he_normal')(up_block1)
 
     return keras.Model(inputs=inputs, outputs=outputs)
+
+
+
