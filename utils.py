@@ -83,4 +83,7 @@ def reconnect_patches(predictions, unified_shape, patch_step, input_size):
                 unified_predictions[middle_v:end_v, middle_h:end_h, 0] = predictions[v][h][half_patch_side:, half_patch_side:]
 
     return unified_predictions
+
+
+    # just to check
         
