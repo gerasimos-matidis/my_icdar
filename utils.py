@@ -3,87 +3,102 @@ import matplotlib.pyplot as plt
 
 def center_crop(img: np.array, crop_shape: tuple):
    
-    crop_h, crop_w = crop_shape[:2]
+    crop_rows, crop_cols = crop_shape[:2]
 
     if len(img.shape) == 2:
-        img_h, img_w = img.shape
+        img_rows, img_cols = img.shape
 
-        start_h = int((img_h - crop_h) / 2)    
-        start_w = int((img_w - crop_w) / 2)
-        end_h = start_h + crop_h
-        end_w = start_w + crop_w
+        start_row = int((img_rows - crop_rows) / 2)    
+        start_col = int((img_cols - crop_cols) / 2)
+        end_row = start_row + crop_rows
+        end_col = start_col + crop_cols
 
-        cropped_img = img[start_h:end_h, start_w:end_w]
+        cropped_img = img[start_row:end_row, start_col:end_col]
 
     elif len(img.shape) == 3:
-        img_h, img_w, _ = img.shape
+        img_rows, img_cols, _ = img.shape
 
-        start_h = int((img_h - crop_h) / 2)    
-        start_w = int((img_w - crop_w) / 2)
-        end_h = start_h + crop_h
-        end_w = start_w + crop_w
+        start_row = int((img_rows - crop_rows) / 2)
+        start_col = int((img_cols - crop_cols) / 2)
+        end_row = start_row + crop_rows
+        end_col = start_col + crop_cols
 
-        cropped_img = img[start_h:end_h, start_w:end_w, :]
+        cropped_img = img[start_row:end_row, start_col:end_col, :]
 
     else:
-        _, img_h, img_w, _ = img.shape
+        _, img_rows, img_cols, _ = img.shape
     
-        start_h = int((img_h - crop_h) / 2)    
-        start_w = int((img_w - crop_w) / 2)
-        end_h = start_h + crop_h
-        end_w = start_w + crop_w
+        start_row = int((img_rows - crop_rows) / 2)    
+        start_col = int((img_cols - crop_cols) / 2)
+        end_row = start_row + crop_rows
+        end_col = start_col + crop_cols
 
-        cropped_img = img[:, start_h:end_h, start_w:end_w, :]
+        cropped_img = img[:, start_row:end_row, start_col:end_col, :]
 
     return cropped_img 
 
 
+def rebuild_from_patches(predictions, unified_shape, patch_step, patch_side):
 
-def reconnect_patches(predictions, unified_shape, patch_step, input_size):
+    overlap_ratio = patch_side / patch_step
+    assert overlap_ratio in (2, 4), "The patch step can only be 1/2 or 1/4 of the patch side" 
 
-    # NOTE: The folowing code works only when the step to create patches (see above) is set to half of the patch size.
-    # I need to rewrite is (as a function) so that it will work in general
-    patches_num_v = predictions.shape[0]
-    patches_num_h = predictions.shape[1]
-    patch_side = int(input_size)
-    half_patch_side = int(patch_side/2)
+    patches_num_vertically = predictions.shape[0]
+    patches_num_horizontally = predictions.shape[1]
+    
+    patch_side = int(patch_side)
+    half_patch_side = int(patch_side / 2)
 
     unified_predictions = np.empty(unified_shape)
     unified_predictions[:] = np.NaN
 
-    for v in range(patches_num_v):
-        for h in range(patches_num_h):
+    if overlap_ratio == 2:
+        for row in range(patches_num_vertically):
+            for col in range(patches_num_horizontally):
+                
+                zero_row = patch_step * row
+                start_row = zero_row
+                middle_row = zero_row + half_patch_side
+                end_row = zero_row + patch_side
 
-            v_zero = patch_step * v
-            start_v = v_zero
-            middle_v = v_zero + half_patch_side
-            end_v = v_zero + patch_side
-            
-            h_zero = patch_step * h
-            start_h = h_zero
-            middle_h = h_zero + half_patch_side
-            end_h = h_zero + patch_side
-            
-            if v == 0 and h == 0:
-                unified_predictions[0:patch_side, 0:patch_side, 0] = predictions[v][h]
-            
-            elif v == 0:
-                unified_predictions[start_v:end_v, start_h:middle_h, 1] = predictions[v][h][:, 0:half_patch_side]
-                unified_predictions[start_v:end_v, middle_h:end_h, 0] = predictions[v][h][:, half_patch_side:]
+                zero_col = patch_step * col
+                start_col = zero_col
+                middle_col = zero_col + half_patch_side
+                end_col = zero_col + patch_side
 
-            elif h == 0:
-                unified_predictions[start_v:middle_v, start_h:middle_h, 1] = predictions[v][h][0:half_patch_side, 0:half_patch_side]
-                unified_predictions[start_v:middle_v, middle_h:end_h, 2] = predictions[v][h][0:half_patch_side, half_patch_side:]
-                unified_predictions[middle_v:end_v, start_h:end_h, 0] = predictions[v][h][half_patch_side:, :]
 
-            else:
-                unified_predictions[start_v:middle_v, start_h:middle_h, 3] = predictions[v][h][0:half_patch_side, 0:half_patch_side]
-                unified_predictions[start_v:middle_v, middle_h:end_h, 2] = predictions[v][h][0:half_patch_side, half_patch_side:]
-                unified_predictions[middle_v:end_v, start_h:middle_h, 1] = predictions[v][h][half_patch_side:, 0:half_patch_side]
-                unified_predictions[middle_v:end_v, middle_h:end_h, 0] = predictions[v][h][half_patch_side:, half_patch_side:]
+                if row == 0 and col == 0:
+                    unified_predictions[:patch_side, :patch_side, 0] = predictions[row, col]
+                
+                elif row == 0:
+                    unified_predictions[zero_row:end_row, start_col:middle_col, 1] = predictions[row, col, :, :half_patch_side]
+                    unified_predictions[zero_row:end_row, middle_col:end_col, 0] = predictions[row, col, :, half_patch_side:]
 
+                elif col == 0:
+                    unified_predictions[zero_row:middle_row, start_col:middle_col, 1] = predictions[row, col, :half_patch_side, :half_patch_side]
+                    unified_predictions[zero_row:middle_row, middle_col:end_col, 2] = predictions[row, col, :half_patch_side, half_patch_side:]
+                    unified_predictions[middle_row:end_row, start_col:end_col, 0] = predictions[row, col, half_patch_side:, :]
+
+                else:
+                    unified_predictions[zero_row:middle_row, start_col:middle_col, 3] = predictions[row, col, :half_patch_side, :half_patch_side]
+                    unified_predictions[zero_row:middle_row, middle_col:end_col, 2] = predictions[row, col, :half_patch_side, half_patch_side:]
+                    unified_predictions[middle_row:end_row, start_col:middle_col, 1] = predictions[row, col, half_patch_side:, :half_patch_side]
+                    unified_predictions[middle_row:end_row, middle_col:end_col, 0] = predictions[row, col, half_patch_side:, half_patch_side:]
+    else:
+        pass
+    """
+    elif overlap_ratio == 4:
+        quarter_patch_side = int(patch_side / 4)
+        three_quarters_patch_side = int(quarter_patch_side * 3)
+
+        for row in range(patches_num_vertically):
+            for col in range(patches_num_horizontally):
+
+                quarter_row = zero_row + quarter_patch_side
+                three_quarters_row = zero_row + three_quarters_patch_side
+
+                quarter_col = zero_col + quarter_patch_side
+                three_quarters_col = zero_col + three_quarters_patch_side
+
+    """
     return unified_predictions
-
-
-    # just to check
-        
