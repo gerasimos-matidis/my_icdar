@@ -1,41 +1,52 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def center_crop(img: np.array, crop_shape: tuple):
+def center_crop(image, crop_shape):
    
     crop_rows, crop_cols = crop_shape[:2]
 
-    if len(img.shape) == 2:
-        img_rows, img_cols = img.shape
+    if len(image.shape) == 2:
+        image_rows, image_cols = image.shape
 
-        start_row = int((img_rows - crop_rows) / 2)    
-        start_col = int((img_cols - crop_cols) / 2)
+        start_row = int((image_rows - crop_rows) / 2)    
+        start_col = int((image_cols - crop_cols) / 2)
         end_row = start_row + crop_rows
         end_col = start_col + crop_cols
 
-        cropped_img = img[start_row:end_row, start_col:end_col]
+        cropped_image = image[start_row:end_row, start_col:end_col]
 
-    elif len(img.shape) == 3:
-        img_rows, img_cols, _ = img.shape
+    elif len(image.shape) == 3:
+        image_rows, image_cols, _ = image.shape
 
-        start_row = int((img_rows - crop_rows) / 2)
-        start_col = int((img_cols - crop_cols) / 2)
+        start_row = int((image_rows - crop_rows) / 2)
+        start_col = int((image_cols - crop_cols) / 2)
         end_row = start_row + crop_rows
         end_col = start_col + crop_cols
 
-        cropped_img = img[start_row:end_row, start_col:end_col, :]
+        cropped_image = image[start_row:end_row, start_col:end_col, :]
 
     else:
-        _, img_rows, img_cols, _ = img.shape
+        _, image_rows, image_cols, _ = image.shape
     
-        start_row = int((img_rows - crop_rows) / 2)    
-        start_col = int((img_cols - crop_cols) / 2)
+        start_row = int((image_rows - crop_rows) / 2)    
+        start_col = int((image_cols - crop_cols) / 2)
         end_row = start_row + crop_rows
         end_col = start_col + crop_cols
 
-        cropped_img = img[:, start_row:end_row, start_col:end_col, :]
+        cropped_image = image[:, start_row:end_row, start_col:end_col, :]
 
-    return cropped_img 
+    return cropped_image 
+
+# -------------------------------------------------------------------------------------------------------------
+
+def create_train_batch(input_image, target_image):
+
+    return None
+
+
+
+
+# -------------------------------------------------------------------------------------------------------------
 
 
 def rebuild_from_patches(predictions, initial_image_shape, patch_step, patch_side):
