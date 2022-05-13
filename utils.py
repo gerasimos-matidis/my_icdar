@@ -1,5 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from patchify import patchify
+
+def normalize_data(data):
+    
+    return (data - data.min()) / (data.max() - data.min())
 
 def center_crop(image, crop_shape):
    
@@ -37,16 +42,50 @@ def center_crop(image, crop_shape):
 
     return cropped_image 
 
-# -------------------------------------------------------------------------------------------------------------
 
-def create_train_batch(input_image, target_image):
+def create_dataset_from_one_image(input_image, target_image, new_image_size, mode='independent_patches', 
+                                  new_images_number=None, patches_step=None):
+        
+    input_image = np.expand_dims(input_image, -1) if len(input_image.shape) == 2 else input_image
+    target_image = np.expand_dims(target_image, -1) if len(target_image.shape) == 2 else target_image
+    
+    concatenated_images = np.concatenate([input_image, target_image], -1)
 
-    return None
+    if mode == 'independent_patches':
+       
+        patches = patchify(concatenated_images, (new_image_size, new_image_size, concatenated_images.shape[-1]), 
+                           step=new_image_size)
+        new_images = np.reshape(patches, ((-1,) + patches.shape[-3:]))
+        
+    elif mode == 'overlapped_patches':
+        
+        if not isinstance(patches_step, int) or patches_step<0:
+            raise ValueError(f'A positive integer was expected for the argument "patches_step".' )
+        
+        patches = patchify(concatenated_images, (new_image_size, new_image_size, concatenated_images.shape[-1]), 
+                           step=patches_step)
+        new_images = np.reshape(patches, ((-1,) + patches.shape[-3:]))
+        
+    elif mode == 'random_patches':
+        
+        if not isinstance(new_images_number, int) or new_images_number<0:
+            raise ValueError(f'A positive integer was expected for the argument "new_images_number".' )
+            
+        new_images = np.zeros([new_images_number, new_image_size, new_image_size, concatenated_images.shape[-1]])
+        
+        for i in range(new_images_number):
 
+            t = tf.image.random_crop(concatenated_images, size=[new_image_size, new_image_size, concatenated_images.shape[-1]])
+            new_images[i] = t[0]
+            
+    else:
+        raise ValueError('Invalid value was given for the arument "mode".')
+    
+    # Separate the inputs from the outputs to create the final batches
+    input_dataset = new_images[:, :, :, :-1]
+    target_dataset = np.expand_dims(new_images[:, :, :, -1], -1)
 
-
-
-# -------------------------------------------------------------------------------------------------------------
+    return input_dataset, target_dataset
 
 
 def rebuild_from_patches(predictions, initial_image_shape, patch_step, patch_side):
@@ -75,7 +114,6 @@ def rebuild_from_patches(predictions, initial_image_shape, patch_step, patch_sid
                 start_col = patch_step * col
                 middle_col = start_col + half_patch_side
                 end_col = start_col + patch_side
-
 
                 if row == 0 and col == 0:
                     unified_predictions[:patch_side, :patch_side, 0] = predictions[row, col]
