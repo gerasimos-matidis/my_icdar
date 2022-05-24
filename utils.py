@@ -1,12 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import tensorflow as tf
 from patchify import patchify
 
 def normalize_data(data):
-    
     return (data - data.min()) / (data.max() - data.min())
 
-def center_crop(image, crop_shape):
+def center_crop(image, crop_shape): # NOTE: Maybe I don't need it
    
     crop_rows, crop_cols = crop_shape[:2]
 
@@ -43,12 +43,10 @@ def center_crop(image, crop_shape):
     return cropped_image 
 
 
-def create_dataset_from_one_image(input_image, target_image, new_image_size, mode='independent_patches', 
-                                  new_images_number=None, patches_step=None):
+def create_dataset_from_one_image(input_image, target_image, new_image_size, mode='independent_patches', new_images_number=None, patches_step=None):
         
     input_image = np.expand_dims(input_image, -1) if len(input_image.shape) == 2 else input_image
     target_image = np.expand_dims(target_image, -1) if len(target_image.shape) == 2 else target_image
-    
     concatenated_images = np.concatenate([input_image, target_image], -1)
 
     if mode == 'independent_patches':
