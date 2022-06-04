@@ -1,38 +1,34 @@
-import os
-import tensorflow as tf
-from tensorflow import keras
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
 import numpy as np
-from patchify import (patchify, unpatchify)
-from utils import center_crop, rebuild_from_patches
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
 
-# Load the input and ground truth images 
-x_initial_valid = plt.imread('validation/201-INPUT.jpg')
-y_initial_valid = plt.imread('validation/201-OUTPUT-GT.png')
+predicions_info = np.load('predictions.npy', allow_pickle=True).tolist()
+validation_pairs = np.load('validation_pairs.npy', allow_pickle=True).tolist()
+x = validation_pairs['x']
+y = validation_pairs['y']
 
-CROP_SIZE_W = 2560 
-CROP_SIZE_H = 2560
+pred_ims = [predicions_info[i]['model_output'] for i in range(len(predicions_info))]
 
-x_initial_valid = center_crop(x_initial_valid, (CROP_SIZE_H, CROP_SIZE_W))
-y_initial_valid = center_crop(y_initial_valid, (CROP_SIZE_H, CROP_SIZE_W))
+print(predicions_info[1]['method'])
+print(np.max(pred_ims[1]))
+colormap = 'gray'
+fig, ax = plt.subplots(2, 3)
 
-# Display a list with the available models and ask the user to choose which to use
-models_path = 'trained_models/cropped_001'
-models_list = os.listdir(models_path)
 
-print('-----------------------------------------------------')
-models = os.listdir(models_path)
-model = keras.models.load_model(os.path.join(models_path, models[0]))
-c = 0
-"""
-for m in models:
-    model = keras.models.load_model(os.path.join(models_path, m))
-    #if c == 0:  os.system('clear')
-    print(f'{m} is loaded.')
-    c += 
-"""
+im = ax[0, 0].imshow(x[0])
+target = ax[0, 1].imshow(y[0], cmap=colormap)
+p1 = ax[1, 0].imshow(pred_ims[0][0], cmap=colormap)
+p2 = ax[1, 1].imshow(pred_ims[1][0], cmap=colormap)
 
+axdepth = plt.axes([0.1, 0.01, 0.8, 0.03])
+sliderdepth = Slider(axdepth, '', 0, x.shape[0] - 1, valinit=0, valstep=1)
+
+def slider_update(val):
+    im.set_data(x[val])
+    target.set_data(y[val])
+    p1.set_data(pred_ims[0][val])
+    p2.set_data(pred_ims[1][val])
     
-    
+sliderdepth.on_changed(slider_update)
 
+plt.show()
