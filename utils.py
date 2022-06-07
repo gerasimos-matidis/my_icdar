@@ -80,7 +80,9 @@ def create_dataset_from_one_image(input_image, target_image, new_image_size, mod
 
 
 def rebuild_from_patches(predictions, initial_image_shape, patch_step, patch_side):
-
+    # NOTE: I think I must check whether I need the initial_image_shape or the exploited image shape 
+    # (because the "unpatchify" function "leaves" the pixels at the end if the image size is not a 
+    # multiple of the patch size, in both directions)
     overlap_ratio = patch_side / patch_step
     assert overlap_ratio in (2, 4), "The patch step can only be 1/2 or 1/4 of the patch side" 
 
