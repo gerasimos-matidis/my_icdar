@@ -1,10 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
-from tensorflow import keras
 
-validation_pairs = np.load('trained_models/full_001/validation_pairs.npy', allow_pickle=True).tolist()
-predicions_info = np.load('trained_models/full_001/predictions.npy', allow_pickle=True).tolist()
+validation_pairs = np.load('models/f001_w_val_data/validation_pairs.npy', allow_pickle=True).tolist()
+predicions_info = np.load('models/f001_w_val_data/predictions.npy', allow_pickle=True).tolist()
 x = validation_pairs['x']
 y = validation_pairs['y']
 pred_ims = np.array([np.where(predicions_info[i]['model output'] > 0.5, 1, 0).astype(int) for i in range(len(predicions_info))])
@@ -32,16 +31,6 @@ for i in range(predictions_num):
     
 axdepth = plt.axes([0.1, 0.01, 0.8, 0.03])
 sliderdepth = Slider(axdepth, '', 0, x.shape[0] - 1, valinit=0, valstep=1)
-
-bce = keras.losses.BinaryCrossentropy()
-
-"""
-patch_loss = np.zeros((predictions_num, pred_ims[0].shape[0]))
-for i in range(predictions_num):
-    for patch in range(pred_ims[0].shape[0]):
-        patch_loss[i, patch] = bce(y[i], pred_ims[i][patch].astype(np.float32)).numpy()
-
-"""
 
 def slider_update(val):
     im.set_data(x[val])
