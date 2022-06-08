@@ -1,12 +1,18 @@
+from tkinter.filedialog import askdirectory
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 
-validation_pairs = np.load('models/f001_w_val_data/validation_pairs.npy', allow_pickle=True).tolist()
-predictions_info = np.load('models/f001_w_val_data/predictions.npy', allow_pickle=True).tolist()
+d = askdirectory(initialdir='./models')
+print(d)
+validation_pairs = np.load(os.path.join(d, 'validation_pairs.npy'), allow_pickle=True).tolist()
+predictions_info = np.load(os.path.join(d, 'predictions.npy'), allow_pickle=True).tolist()
 x = validation_pairs['x']
 y = validation_pairs['y']
 pred_ims = np.array([np.where(predictions_info[i]['model output'] > 0.5, 1, 0).astype(int) for i in range(len(predictions_info))])
+loss = np.array([predictions_info[i]["loss"] for i in range(len(predictions_info))]).squeeze()
+mean_iou = np.array([predictions_info[i]["mean_iou"] for i in range(len(predictions_info))]).squeeze()
 predictions_num = len(predictions_info)
 PLOT_ROWS_NUM = 2
 plot_cols_num = int(np.ceil((predictions_num + 2) / PLOT_ROWS_NUM))
@@ -27,7 +33,6 @@ for i in range(predictions_num):
         row = 0
     exec(f'p{i} = ax[row, col].imshow(pred_ims[i][0], cmap=colormap)')
     ax[row, col].title.set_text(f'{predictions_info[i]["mode"]}, {predictions_info[i]["initial images"]} images')
-    ax[row, col].set(xlabel=f'Total loss: {"{:0.4f}".format(predictions_info[i]["loss"])}')
     
 axdepth = plt.axes([0.1, 0.01, 0.8, 0.03])
 sliderdepth = Slider(axdepth, '', 0, x.shape[0] - 1, valinit=0, valstep=1)
@@ -38,9 +43,16 @@ def slider_update(val):
 
     row, col = 1, 0
     for i in range(predictions_num):
-        eval(f'p{i}.set_data(pred_ims[i][val])')
+        if row + 1 < PLOT_ROWS_NUM:
+                row += 1
+        else:
+            col += 1
+            row = 0
         
-    
+        eval(f'p{i}.set_data(pred_ims[i][val])')
+        ax[row, col].set(xlabel=f'loss: {"{:0.4f}".format(loss[i][val])}\nmean IoU: {"{:0.4f}".format(mean_iou[i][val])}')
+        #ax[row, col].set(xlabel=f'loss: {"{:0.4f}".format(loss[i][val])}')
+                
 sliderdepth.on_changed(slider_update)
 plt.setp(plt.gcf().get_axes(), xticks=[], yticks=[])
 plt.show()
