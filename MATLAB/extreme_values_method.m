@@ -1,4 +1,4 @@
-function [new_image, outliers_id] = extreme_values_method(image, kernel_size, threshold)
+function [image, outliers_id] = extreme_values_method(image, kernel_size, threshold)
 % EXTREME_VALUES_METHOD This function applies the method of extreme values
 % on a single-channel image.
 % It takes as arguments the image, a kernel size, which is a positive, odd
@@ -27,8 +27,7 @@ differences = abs(image - neighbors_avg);
 
 % Replace the outliers with the average value of the neighbours
 outliers_id = differences > threshold;
-new_image = image;
-new_image(outliers_id) = neighbors_avg(outliers_id);
+image(outliers_id) = neighbors_avg(outliers_id);
 
 end
 
