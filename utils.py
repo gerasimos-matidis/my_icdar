@@ -3,10 +3,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from patchify import patchify
 
-def normalize_data(data):
-    return (data - data.min()) / (data.max() - data.min())
-
-def center_crop(image, crop_shape): # NOTE: Maybe I don't need it
+def center_crop(image, crop_shape):
    
     crop_rows, crop_cols = crop_shape[:2]
 

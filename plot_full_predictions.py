@@ -30,9 +30,7 @@ predictions_info = []
 for modelname in models_list:
     print(f'Loading ==> {modelname}')
     model = keras.models.load_model(os.path.join(models_path, modelname))
-    splitted_modelname = modelname.split('_')[3:6]
-    images_num = splitted_modelname[0].replace('images', '')
-    mode = splitted_modelname[1] + ' ' + splitted_modelname[2]
+    splitted_modelname = modelname.split('_')[3:]
     prediction = np.squeeze(model.predict(input_patches))
     reshaped_prediction = np.reshape(prediction, y_patches.shape)
     full_prediction = unpatchify(reshaped_prediction, y.shape)
@@ -44,8 +42,9 @@ for modelname in models_list:
         'image': full_prediction,
         'loss': bce(y, full_prediction).numpy(),
         'mean_iou': m.result().numpy(),
-        'mode': mode,
-        'initial images': images_num
+        'mode': splitted_modelname[1] + ' ' + splitted_modelname[2],
+        'initial images': splitted_modelname[0].replace('images', ''),
+        'epochs': splitted_modelname[-1].replace('eps', '')
     }  
     predictions_info.append(p_info)
 
@@ -69,8 +68,8 @@ for i in range(predictions_num):
         col += 1
         row = 0
     exec(f'p{i} = ax[row, col].imshow(predictions_info[i]["image"], cmap=colormap)')
-    ax[row, col].title.set_text(f'{predictions_info[i]["mode"]}, {predictions_info[i]["initial images"]} images')
-    ax[row, col].set(xlabel=f'loss: {"{:0.4f}".format(predictions_info[i]["loss"])}, mean IoU: {"{:0.4f}".format(predictions_info[i]["mean_iou"])}')
+    ax[row, col].title.set_text(f'{predictions_info[i]["mode"]},\n{predictions_info[i]["initial images"]} images, {predictions_info[i]["epochs"]} epochs')
+    ax[row, col].set(xlabel=f'loss: {"{:0.3f}".format(predictions_info[i]["loss"])}, mean IoU: {"{:0.2f}".format(predictions_info[i]["mean_iou"])}')
 
 
 plt.setp(plt.gcf().get_axes(), xticks=[], yticks=[])
