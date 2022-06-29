@@ -1,5 +1,5 @@
 function [image, outliers_id] = extreme_values_method(image, kernel_size, threshold)
-% EXTREME_VALUES_METHOD applies the method of extreme values on a 
+% EXTREME_VALUES_METHOD applies the method of extreme values on a
 % single-channel image.
 % It takes as arguments the image, a kernel size, which is a positive, odd
 % number that defines the side of a square kernel, and a threshold. The
