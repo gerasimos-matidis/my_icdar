@@ -30,7 +30,7 @@ if evm_flag == true
 
 else
     subplot_rows_num = 2;
-    
+
 end
 
 % If only one file is selected, convert the variable "files" into a Cell 
@@ -65,8 +65,35 @@ for i = 1:files_number
     
     level = graythresh(average_predictions);
     binary_predictions_otsu = imbinarize(average_predictions, level);
-    
+
     figure('Name','Post-processing the predictions','NumberTitle','off');
+    if evm_flag == true
+        updated_average_predictions = extreme_values_method( ...
+            average_predictions, kernel_size, threshold);
+
+        binary_predictions_equal_evm = imbinarize( ...
+            updated_average_predictions, 0.5);
+
+        level_evm = graythresh(updated_average_predictions);
+        binary_predictions_otsu_evm = imbinarize( ...
+            updated_average_predictions, level_evm);
+    end
+
+        subplot(subplot_rows_num, 2, 5)
+        imshow(binary_predictions_equal_evm);
+        title(["Binarized Image with equal class weights (threshold = 0.5)", ...
+            "Extreme Values method was applied (kernel size = " ...
+            + kernel_size + ", Threshold = " + threshold + ")"])
+        xlabel("Mean IoU = " + mean_iou_4bins(binary_predictions_equal_evm, ...
+        ground_truth))
+        subplot(subplot_rows_num, 2, 6)
+        imshow(binary_predictions_otsu_evm);
+        title(["Binarized image using Otsu's method", ...
+            "Extreme Values method was applied (kernel size = " ...
+            + kernel_size + ", Threshold = " + threshold + ")"])
+        xlabel("Mean IoU = " + mean_iou_4bins(binary_predictions_otsu_evm, ...
+        ground_truth))
+    
     subplot(subplot_rows_num, 2, 1)
     imshow(input_image);
     title('Input Image')
@@ -76,11 +103,13 @@ for i = 1:files_number
     subplot(subplot_rows_num, 2, 3)
     imshow(binary_predictions_equal);
     title('Binarized Image with equal class weights (threshold = 0.5)')
-    xlabel(['Mean IoU = ', num2str(mean_iou_4bins(binary_predictions_equal, ground_truth))])
+    xlabel("Mean IoU = " + mean_iou_4bins(binary_predictions_equal, ...
+        ground_truth))
     subplot(subplot_rows_num, 2, 4)
     imshow(binary_predictions_otsu);
     title("Binarized image using Otsu's method")
-    xlabel(['Mean IoU = ', num2str(mean_iou_4bins(binary_predictions_otsu, ground_truth))])
+    xlabel("Mean IoU = " + mean_iou_4bins(binary_predictions_otsu, ...
+        ground_truth))
 
 
     %NOOOOTTEEEEE: Make the suptitle!!!
