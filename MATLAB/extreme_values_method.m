@@ -12,7 +12,7 @@ function [image, outliers_id] = extreme_values_method(image, kernel_size, thresh
 
 % Create the kernel
 assert(kernel_size > 0 & mod(kernel_size, 2) ~= 0, ...
-    'The kernel size must be defined by a positive, odd number!')
+    'The kernel size must be a positive, odd number!')
 kernel = ones(kernel_size);
 central_pixel_id = ceil(kernel_size / 2);
 kernel(central_pixel_id, central_pixel_id) = 0;
