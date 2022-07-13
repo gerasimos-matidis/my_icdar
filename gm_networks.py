@@ -14,7 +14,6 @@ def conv_block(inputs, n_filters, kernel_size, padding):
     Returns:
         x -- Tensor with the feature maps after the convolutions
     """
-
     x = keras.layers.Conv2D(n_filters, kernel_size, padding=padding, kernel_initializer='he_normal')(inputs)
     x = keras.layers.BatchNormalization()(x)
     x = keras.layers.Activation('relu')(x)
@@ -39,7 +38,6 @@ def encoder_block(inputs, n_filters, kernel_size, padding, pool_size, dropout_pr
         next_layer -- Output to the next block
         skip_connection --  Output for the skip connection
     """
-   
     feature_maps = conv_block(inputs, n_filters, kernel_size, padding)
     
     if dropout_probability > 0:
@@ -66,27 +64,18 @@ def decoder_block(inputs, skipped_input, n_filters, kernel_size, padding, stride
         stride_size -- Stride size for the trasposed convolution
     Returns:
         next_layer -- Output to the next block
-
     """
-
     upsampled = keras.layers.Conv2DTranspose(n_filters, kernel_size, stride_size, padding='same')(inputs)
-
-    if padding == 'valid':
-
-        crop_shape = upsampled.shape[1:3]
-        skipped_input = center_crop(skipped_input, crop_shape)
-        
     merged = keras.layers.Concatenate()([upsampled, skipped_input])
     feature_maps = conv_block(merged, n_filters, kernel_size, padding)
-    
     next_layer = feature_maps
-
+    
     return next_layer
 
 
 def unet_model(input_shape=(512, 512, 3), initial_filters=32, kernel_size=(3, 3), padding='same', pool_size=(2, 2), up_stride_size = (2, 2), n_classes=1, dropout_probability = 0.3):
     """
-    Unet model
+    Definition of the Unet model
 
     Arguments:
         input_shape -- Shape of the input images to the model
@@ -96,8 +85,9 @@ def unet_model(input_shape=(512, 512, 3), initial_filters=32, kernel_size=(3, 3)
         up_stride_size -- Stride size for the trasposed convolution
         n_classes -- Number of the output classes
         dropout_probability -- Dropout probability
+    Returns:
+        The model
     """
-
     inputs = keras.layers.Input(input_shape)
     down_block1 = encoder_block(inputs, initial_filters, kernel_size, padding, pool_size, 0)
     down_block2 = encoder_block(down_block1[0], initial_filters*2, kernel_size, padding, pool_size, 0)
@@ -111,6 +101,3 @@ def unet_model(input_shape=(512, 512, 3), initial_filters=32, kernel_size=(3, 3)
     outputs = keras.layers.Conv2D(n_classes, 1, padding='same', activation='sigmoid', kernel_initializer='he_normal')(up_block1)
 
     return keras.Model(inputs=inputs, outputs=outputs)
-
-
-
