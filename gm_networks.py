@@ -72,7 +72,6 @@ def decoder_block(inputs, skipped_input, n_filters, kernel_size, padding, stride
     
     return next_layer
 
-
 def unet_model(input_shape=(512, 512, 3), initial_filters=32, kernel_size=(3, 3), padding='same', pool_size=(2, 2), up_stride_size = (2, 2), n_classes=1, dropout_probability = 0.3):
     """
     Definition of the Unet model
