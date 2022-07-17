@@ -1,5 +1,6 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1' # Disables the INFO messages (when is setting to '1')
 import numpy as np
-import tensorflow as tf
 from tensorflow import keras
 from utils import center_crop
 
@@ -20,7 +21,6 @@ def conv_block(inputs, n_filters, kernel_size, padding):
     x = keras.layers.Conv2D(n_filters, kernel_size, padding=padding, kernel_initializer='he_normal')(x)
     x = keras.layers.BatchNormalization()(x)
     x = keras.layers.Activation('relu')(x)
-
     return x
 
 def encoder_block(inputs, n_filters, kernel_size, padding, pool_size, dropout_probability, max_pooling=True):
@@ -49,7 +49,6 @@ def encoder_block(inputs, n_filters, kernel_size, padding, pool_size, dropout_pr
         next_layer_input = feature_maps
 
     skip_connection = feature_maps
-    
     return next_layer_input, skip_connection
 
 def decoder_block(inputs, skipped_input, n_filters, kernel_size, padding, stride_size):
@@ -68,9 +67,8 @@ def decoder_block(inputs, skipped_input, n_filters, kernel_size, padding, stride
     upsampled = keras.layers.Conv2DTranspose(n_filters, kernel_size, stride_size, padding='same')(inputs)
     merged = keras.layers.Concatenate()([upsampled, skipped_input])
     feature_maps = conv_block(merged, n_filters, kernel_size, padding)
-    next_layer = feature_maps
     
-    return next_layer
+    return feature_maps
 
 def unet_model(input_shape=(512, 512, 3), initial_filters=32, kernel_size=(3, 3), padding='same', pool_size=(2, 2), up_stride_size = (2, 2), n_classes=1, dropout_probability = 0.3):
     """
@@ -98,5 +96,4 @@ def unet_model(input_shape=(512, 512, 3), initial_filters=32, kernel_size=(3, 3)
     up_block2 = decoder_block(up_block3, down_block2[1], initial_filters*2, kernel_size, padding, up_stride_size)
     up_block1 = decoder_block(up_block2, down_block1[1], initial_filters, kernel_size, padding, up_stride_size)
     outputs = keras.layers.Conv2D(n_classes, 1, padding='same', activation='sigmoid', kernel_initializer='he_normal')(up_block1)
-
     return keras.Model(inputs=inputs, outputs=outputs)
