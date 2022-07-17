@@ -85,7 +85,7 @@ def unet_model(input_shape=(512, 512, 3), initial_filters=32, kernel_size=(3, 3)
     Returns:
         The model
     """
-    inputs = keras.layers.Input(input_shape)
+    inputs = keras.layers.Input(shape=input_shape)
     down_block1 = encoder_block(inputs, initial_filters, kernel_size, padding, pool_size, 0)
     down_block2 = encoder_block(down_block1[0], initial_filters*2, kernel_size, padding, pool_size, 0)
     down_block3 = encoder_block(down_block2[0], initial_filters*4, kernel_size, padding, pool_size, 0)
