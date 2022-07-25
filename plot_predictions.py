@@ -1,13 +1,14 @@
-from tkinter.filedialog import askdirectory
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1' # Disables the INFO messages
+from tkinter.filedialog import askdirectory
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 
 d = askdirectory(initialdir='./models')
 print(d)
-validation_pairs = np.load(os.path.join(d, 'validation_pairs.npy'), allow_pickle=True).tolist()
-predictions_info = np.load(os.path.join(d, 'predictions.npy'), allow_pickle=True).tolist()
+validation_pairs = np.load(os.path.join(d, 'validation_pairs_dict.npy'), allow_pickle=True).tolist()
+predictions_info = np.load(os.path.join(d, 'predictions_dict.npy'), allow_pickle=True).tolist()
 x = validation_pairs['x']
 y = validation_pairs['y']
 pred_ims = np.array([np.where(predictions_info[i]['model output'] > 0.5, 1, 0).astype(int) for i in range(len(predictions_info))])
@@ -32,7 +33,7 @@ for i in range(predictions_num):
         col += 1
         row = 0
     exec(f'p{i} = ax[row, col].imshow(pred_ims[i][0], cmap=colormap)')
-    ax[row, col].title.set_text(f'{predictions_info[i]["mode"]}\n{predictions_info[i]["initial images"]} images, {predictions_info[i]["epochs"]} epochs')
+    ax[row, col].title.set_text(f'{predictions_info[i]["mode"]}, {predictions_info[i]["initial images"]} images, {predictions_info[i]["epochs"]} epochs')
     
 axdepth = plt.axes([0.1, 0.01, 0.8, 0.03])
 sliderdepth = Slider(axdepth, '', 0, x.shape[0] - 1, valinit=0, valstep=1)

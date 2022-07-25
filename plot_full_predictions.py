@@ -24,6 +24,9 @@ models_list = [name for name in os.listdir(models_path) if os.path.isdir(os.path
 
 if 'logs' in models_list:
     models_list.remove('logs')
+    
+if 'predictions' in models_list:
+    models_list.remove('predictions')
 
 bce = keras.losses.BinaryCrossentropy()
 predictions_info = []
