@@ -9,7 +9,8 @@ from patchify import patchify
 from tkinter.filedialog import askopenfilename, askdirectory
 from gui_for_ds import get_arguments_by_gui
 
-# NOTE: The following line sets the tensorflow's devive to CPU. 
+# NOTE: The following line sets the tensorflow's devive to CPU. The reason is 
+# that the TensorFlow function used in this script is used in a for loop.
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 
@@ -54,6 +55,7 @@ def remove_invalid_patches(images):
     valid_patches = images[valid_patches_id]
     print('Valid patches (without areas that exceed the map borders): ',
         valid_patches.shape[0])
+
     return valid_patches
 
 
@@ -71,10 +73,10 @@ def remove_non_texture_patches(images, min_class_percentage=None):
 
 def save_dataset(input_images, target_images, output_directory=None, 
     sampling_method=None, patch_size=None, initial_ds_name=None):
-    
     error_msg = ['The number of the input images, as long as the number of the ' 
     'target images must be the same. You must check the provided arguments in '
     'the function']
+
     if len(target_images.shape) == 3: # if the target image is grayscale
         assert input_images.shape[:-1] == target_images.shape, error_msg[0]
     else: # if the target image is multi-channel
@@ -84,9 +86,11 @@ def save_dataset(input_images, target_images, output_directory=None,
     ds_final_dir_level = os.path.join(output_directory, patches_sz_level, 
         sampling_method, initial_ds_name)
     
+    images_number = input_images.shape[0]
     if sampling_method == 'random_patches':
-        images_number = input_images.shape[0]
-        ds_final_dir_level = os.path.join(ds_final_dir_level, str(images_number))
+
+        ds_final_dir_level = os.path.join(ds_final_dir_level, 
+            str(images_number) + 'ims')
         
     os.makedirs(ds_final_dir_level)
     inputs_save_path = os.path.join(ds_final_dir_level, 'inputs')
@@ -104,7 +108,6 @@ def save_dataset(input_images, target_images, output_directory=None,
 
     print(f'\nThe final patches (= {images_number}) were saved in : '
        f'{ds_final_dir_level}')
-
 
 if __name__ == '__main__':
 
@@ -133,7 +136,6 @@ if __name__ == '__main__':
         sampling_method=method, patches_number=patch_num, patches_step=patch_stp)
     
     valid_patches = remove_invalid_patches(new_patches)
-    
     final_patches = remove_non_texture_patches(valid_patches, 
         min_class_percentage=min_perc)
 
@@ -141,11 +143,8 @@ if __name__ == '__main__':
     # current dataset's naming conventions!!! It would not work in every case
     input_image_name = input_image_path.split('/')[-1]
     ds_name = input_image_name.split('-')[0]
-
     ds_input_images = final_patches[:, :, :, :-1].astype(np.uint8)
     ds_target_images = final_patches[:, :, :, -1]
-
-
     save_dataset(ds_input_images, ds_target_images, output_directory=out_dir, 
         sampling_method=method, patch_size=patch_sz, initial_ds_name=ds_name)
 

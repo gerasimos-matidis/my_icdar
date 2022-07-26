@@ -39,7 +39,7 @@ def get_arguments_by_gui():
     # function that opens a window where the user can select the target image
     def ask_target_image():
         global target_image_path
-        f = askopenfile(initialdir="datasets")
+        f = askopenfile()
         target_image_path = f.name
         target_path_entry.insert(0, target_image_path)
 
@@ -104,7 +104,6 @@ def get_arguments_by_gui():
     percentage_entry = Entry(mainframe, width=60, font="Arial 10",  borderwidth=3)
     percentage_entry.insert(0, 0.10)
     percentage_entry.grid(column=3, row=5, sticky=W)
-
 
     # Text box to define number of patches
     patches_num_label = Label(mainframe, text='Define number of patches to create '
