@@ -3,7 +3,8 @@
 from ast import arg
 import os
 import numpy as np
-import matplotlib.pyplot as plt
+from PIL import Image
+#import matplotlib.pyplot as plt
 import tensorflow as tf
 from patchify import patchify
 from tkinter.filedialog import askopenfilename, askdirectory
@@ -77,12 +78,17 @@ def save_dataset(input_images, target_images, output_directory=None,
     'target images must be the same. You must check the provided arguments in '
     'the function']
 
+    target_images = target_images * 255
     if len(target_images.shape) == 3: # if the target image is grayscale
         assert input_images.shape[:-1] == target_images.shape, error_msg[0]
+        target_images = np.expand_dims(target_images, axis=-1)
+        # Repeat the tensor with the binary images (with shape = [images_num, height, width, 1]) 3 times, so as to save it as a RGB image 
+        target_images = np.tile(target_images, (1, 1, 1, 3)).astype(np.uint8)
+    
     else: # if the target image is multi-channel
         assert input_images.shape[:-1] == target_images.shape[-1], error_msg[0]
 
-    patches_sz_level = f'{patch_size}by{patch_size}'
+    patches_sz_level = f'{patch_size}by{2*patch_size}'
     ds_final_dir_level = os.path.join(output_directory, patches_sz_level, 
         sampling_method, initial_ds_name)
     
@@ -93,21 +99,18 @@ def save_dataset(input_images, target_images, output_directory=None,
             str(images_number) + 'ims')
         
     os.makedirs(ds_final_dir_level)
-    inputs_save_path = os.path.join(ds_final_dir_level, 'inputs')
-    targets_save_path = os.path.join(ds_final_dir_level, 'targets')
-    os.makedirs(inputs_save_path)
-    os.makedirs(targets_save_path)
-
+    target_images = np.where(target_images == 1, 255, 0).astype(np.uint8)
+    
     for i in range(input_images.shape[0]):
-        input_filename = f'input_{i+1}.png'
-        input_filepath = os.path.join(inputs_save_path, input_filename)
-        target_filename = f'target_{i+1}.png'
-        target_filepath = os.path.join(targets_save_path, target_filename)
-        plt.imsave(input_filepath, input_images[i])
-        plt.imsave(target_filepath, target_images[i])
+        images = np.hstack((input_images[i], target_images[i]))
+        filename = f'{i+1}.jpg'
+        filepath = os.path.join(ds_final_dir_level, filename)
+        im = Image.fromarray(images)
+        im.save(filepath)
 
     print(f'\nThe final patches (= {images_number}) were saved in : '
        f'{ds_final_dir_level}')
+
 
 if __name__ == '__main__':
 
@@ -129,8 +132,8 @@ if __name__ == '__main__':
     else:
         patch_stp = None
        
-    input_image = plt.imread(input_image_path)
-    target_image = plt.imread(target_image_path)
+    input_image = Image.open(input_image_path)
+    target_image = Image.open(target_image_path)
     print('\n\33[4mDataset creation report \33[m\n')
     new_patches = create_patches(input_image, target_image, patch_size=patch_sz, 
         sampling_method=method, patches_number=patch_num, patches_step=patch_stp)
