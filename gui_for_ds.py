@@ -92,7 +92,7 @@ def get_arguments_by_gui():
     patch_size_label.grid(column=0, row=4)
     patch_size_options = [64, 128, 256, 512] # list of the available fMRIPrep versions
     clicked_patch_size = StringVar()
-    clicked_patch_size.set(patch_size_options[1])
+    clicked_patch_size.set(patch_size_options[2])
     patch_size_menu = OptionMenu(mainframe, clicked_patch_size, *patch_size_options)
     patch_size_menu.grid(column=3, row=4, sticky="NSWE")
 
