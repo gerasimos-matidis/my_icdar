@@ -32,7 +32,7 @@ for i = 1:files_num
     images = readNPY(fullfile(path, files{i}));
 
     if i == 1
-        input_image = images(:, :, 1:3);
+        input_image = uint8(images(:, :, 1:3));
         ground_truth = logical(images(:, :, 4));
         figure;
         imshow(input_image);
@@ -40,8 +40,8 @@ for i = 1:files_num
     else
         % Check if all the selected files refer to predictions on the same 
         % input
-        if isequal(images(:, :, 1:3), input_image) == false
-            error(['The Selected files must refer to predictions calculated' ...
+        if isequal(uint8(images(:, :, 1:3)), input_image) == false
+            error(['The Selected files must refer to predictions calculated ' ...
                 'on the same input image!'])
         end
     end    

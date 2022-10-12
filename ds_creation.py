@@ -78,7 +78,7 @@ def save_dataset(input_images, target_images, output_directory=None,
     'target images must be the same. You must check the provided arguments in '
     'the function']
 
-    target_images = target_images * 255
+    target_images = target_images * 255 # If the target images are in [0, 1]
     if len(target_images.shape) == 3: # if the target image is grayscale
         assert input_images.shape[:-1] == target_images.shape, error_msg[0]
         target_images = np.expand_dims(target_images, axis=-1)

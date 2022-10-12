@@ -4,6 +4,7 @@ import numpy as np
 from tensorflow import keras
 from utils import center_crop
 
+
 def conv_block(inputs, n_filters, kernel_size, padding):
     """
     Convolutional block of Unet, consisted of 2 sub-blocks of convolution/batch normalization/activation operations
